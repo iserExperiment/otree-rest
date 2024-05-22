@@ -1,0 +1,14 @@
+{{ block title }}Introduction{{ endblock }}
+{{ block content }}
+
+<div>
+    <code>
+        player.participant.vars = {{ participant | json }}
+    </code>
+</div>
+
+{{ include_sibling 'instructions.html' }}
+
+{{ next_button }}
+
+{{ endblock }}

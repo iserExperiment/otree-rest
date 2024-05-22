@@ -1,0 +1,98 @@
+<div class="p-3 m-2 bg-light">
+    <div class="mb-5">
+        <p>Handled</p>
+        <ul>
+            {{ for el in revivallist }}
+            <li>P{{ el.0 }} ({{ el.1 }}): {{ el.2 }}</li>
+            {{ endfor }}
+        </ul>
+    </div>
+    <div class="my-3">
+        <select class="form-select" id="InputDeadCode">
+            {{ for el in deadlist }}
+            <option value="{{ el.1 }}" {{ if forloop.counter0 == 0 }}selected{{ endif }}>
+                P{{ el.0 }} ({{ el.1 }})
+            </option>
+            {{ endfor }}
+        </select>
+    </div>
+    <div class="my-3">
+        <label for="InputStudentId" class="form-label">Student ID</label>
+        <input type="text" class="form-control" id="InputStudentId">
+    </div>
+    <div class="my-3">
+        <label for="InputHandleName" class="form-label">Handle Name</label>
+        <input type="text" class="form-control" id="InputHandleName">
+    </div>
+    <div class="my-3 form-check">
+        <input class="form-check-input" type="checkbox" value="" id="CurlCheck">
+        <label class="form-check-label" for="CurlCheck">
+            Generate Curl Command
+        </label>
+    </div>
+    <div class="my-3">
+        <button class="btn btn-warning" type="button" id="GenerateButton">Submit</button>
+    </div>
+    <div class="alert alert-danger my-3 p-3" style="display: none;">
+        <code id="AjaxError"></code>
+    </div>
+    <div class="alert alert-warning my-3 p-3" style="display: none;">
+        <code id="Generated"></code>
+    </div>
+</div>
+
+
+
+<script>
+    document.getElementById('GenerateButton').addEventListener('click', function () {
+        const deadcode = document.getElementById('InputDeadCode');
+        const studentid = document.getElementById('InputStudentId');
+        const handlename = document.getElementById('InputHandleName');
+        const curlcheck = document.getElementById('CurlCheck');
+        const ajaxerror = document.getElementById('AjaxError');
+        const generated = document.getElementById('Generated');
+        const protocol = window.location.protocol;
+        const host = window.location.host;
+
+        if (studentid.value) {
+            if (curlcheck.checked) {
+                generated.innerText = `\
+                    curl -X POST ${protocol}//${host}/api/participant_vars/${deadcode.value} \\
+                    -H "Content-Type: application/json" \\
+                    -H 'otree-rest-key: {{ REST_KEY | default('""') }}' \\
+                    -d '{"vars": {"studentid": "${studentid.value}", "handlename": "${handlename.value}"}}'
+                `;
+                generated.parentElement.style.display = 'block';
+            }
+            else {
+                jQuery.ajax({
+                    url: `/api/participant_vars/${deadcode.value}`,
+                    type: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'otree-rest-key': '{{ REST_KEY }}'
+                    },
+                    data: JSON.stringify({
+                        vars: {
+                            studentid: studentid.value,
+                            handlename: handlename.value
+                        }
+                    }),
+                    success: function (data) {
+                        ajaxerror.parentElement.style.display = 'none';
+                        studentid.value = '';
+                        handlename.value = '';
+                        alert('Success');
+                        location.reload();
+                    },
+                    error: function (data) {
+                        ajaxerror.innerText = JSON.stringify(data, null, 4);
+                        ajaxerror.parentElement.style.display = 'block';
+                        console.error(data);
+                        alert('Error');
+                    }
+                });
+            }
+        }
+    });
+</script>
